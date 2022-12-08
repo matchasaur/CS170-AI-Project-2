@@ -17,12 +17,12 @@ def main():
     while (choice != '1' or choice != '2'):
         if (choice == '1'):
             print("\n   Loading in the small data set...    \n")
-            arr = np.loadtxt("CS170_Small_Data__6.txt")
+            arr = np.loadtxt("CS170_Small_Data__88.txt")
             print(arr.shape)
             break
         elif (choice == '2'):
             print("\n   Loading in the large data set...    \n")
-            arr = np.loadtxt("CS170_Large_data__123.txt")
+            arr = np.loadtxt("CS170_Large_data__96.txt")
             print(arr.shape)
             break
         else:
@@ -33,53 +33,63 @@ def main():
 
 def leave_one_out_cross_validation(data, current_set_of_features, feature_to_add):
     number_correctly_classified = 0
-
     
-    for i in range(0, data.shape[0]):
-        object_to_classify = data[i,1:]
-        label_object_to_classify = data[i,0]
+    features = []
+    features.append(0)
+    features.append(feature_to_add)
+    for x in range(0, len(current_set_of_features)):
+        features.append(current_set_of_features[x])
+    tempdata = data[:,features]
+    #print(current_set_of_features, "\n")
+    
+    for i in range(0, tempdata.shape[0]):
+        object_to_classify = tempdata[i,1:]
+        label_object_to_classify = tempdata[i,0]
         
         nearest_neighbor_distance = np.inf
         nearest_neighbor_location = np.inf
         
-        for k in range(0, data.shape[0]):
+        for k in range(0, tempdata.shape[0]):
             if k != i:
-                for y in range(1, data.shape[1]):
-                    if y not in current_set_of_features and y != feature_to_add:
-                        data[k,y] = 0
+                #for y in range(1, data.shape[1]):
+                #    if ((y not in current_set_of_features) and (y != feature_to_add)):
+                #        tempdata[k,y] = 0
                 #print("Asking if " + str(i+1) + " is nearest neighbour with " + str(k+1))
-                temp = np.subtract(object_to_classify, data[k,1:])
+                temp = np.subtract(object_to_classify, tempdata[k,1:])
                 distance = math.sqrt(np.dot(temp, temp))
                 if distance < nearest_neighbor_distance:
                     nearest_neighbor_distance = distance
                     nearest_neighbor_location = k
-                    nearest_neighbor_label = data[nearest_neighbor_location,0]
+                    nearest_neighbor_label = tempdata[nearest_neighbor_location,0]
                 
             
         if label_object_to_classify == nearest_neighbor_label:
             number_correctly_classified = number_correctly_classified + 1
-        
+        #print(nearest_neighbor_distance, "\n")
     print(number_correctly_classified/data.shape[0])
     return number_correctly_classified / data.shape[0]
 
 def feature_search(data):
     current_set_of_features = [] #Initialize empty set
+    
+    best_acc_so_far = 0
 
     for i in range(0, data.shape[1]-1):
         print("On level "+str(i+1)+" of the search tree")
         feature_to_add_at_this_level = None
-        best_acc_so_far = 0
         
-        for k in range(0, data.shape[1]-1):
-            if (k not in current_set_of_features):
-                print("-- Considering adding the "+str(k+1)+" feature")
-                accuracy = leave_one_out_cross_validation(data, current_set_of_features, k+1)
-                
+        for k in range(1, data.shape[1]):
+            if (k in current_set_of_features):
+                continue
+            else:
+                #print("-- Considering adding the "+str(k)+" feature")
+                accuracy = leave_one_out_cross_validation(data, current_set_of_features, k)
                 if accuracy > best_acc_so_far:
                     best_acc_so_far = accuracy
                     feature_to_add_at_this_level = k
 
-        current_set_of_features.append(feature_to_add_at_this_level)
+        if feature_to_add_at_this_level:
+            current_set_of_features.append(feature_to_add_at_this_level)
         print("On level "+str(i+1)+" I added feature "+str(feature_to_add_at_this_level)+" to current set")
     print("Finished search! The best feature set is ",current_set_of_features)
     print(" It has an accuracy of ", best_acc_so_far)
