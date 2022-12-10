@@ -1,6 +1,7 @@
 import numpy as np
 import random
 import math
+import time
 #
 # Name: Jared Tanuwidjaja
 # SID: 862173492
@@ -18,18 +19,29 @@ def main():
         if (choice == '1'):
             print("\n   Loading in the small data set...    \n")
             arr = np.loadtxt("CS170_Small_Data__88.txt")
-            print(arr.shape)
             break
         elif (choice == '2'):
             print("\n   Loading in the large data set...    \n")
             arr = np.loadtxt("CS170_Large_data__96.txt")
-            print(arr.shape)
             break
         else:
             print("Please enter a valid input:\n    1 - Small Data Set\n    2 - Large Data Set\n")
 
     #Run feature_search on the data set
-    feature_search(arr)
+    choice = input("Choose your algorithm:\n 1 - Forward Selection\n 2 - Backwards Elimination\n")
+    while (choice != '1' or choice != '2'):
+        if (choice == '1'):
+            print("\n   Running Forward Selection...    \n")
+            forward_select(arr)
+            break
+        elif (choice == '2'):
+            print("\n   Running Backwards Elimination    \n")
+            backward_elim(arr)
+            break
+        else:
+            print("Please enter a valid input:\n    1 - Forward Selection\n    2 - Backwards Elimination\n")
+
+    
 
 def leave_one_out_cross_validation(data, current_set_of_features, feature_to_add):
     number_correctly_classified = 0
@@ -42,7 +54,7 @@ def leave_one_out_cross_validation(data, current_set_of_features, feature_to_add
     tempdata = data[:,features]
     #print(current_set_of_features, "\n")
     
-    for i in range(0, tempdata.shape[0]):
+    for i in range(0, data.shape[0]):
         object_to_classify = tempdata[i,1:]
         label_object_to_classify = tempdata[i,0]
         
@@ -69,7 +81,35 @@ def leave_one_out_cross_validation(data, current_set_of_features, feature_to_add
     print(number_correctly_classified/data.shape[0])
     return number_correctly_classified / data.shape[0]
 
-def feature_search(data):
+def forward_select(data):
+    starttime = time.time()
+    current_set_of_features = [] #Initialize empty set
+    
+    best_acc_so_far = 0
+
+    for i in range(0, data.shape[1]-1):
+        print("On level "+str(i+1)+" of the search tree")
+        feature_to_add_at_this_level = None
+        
+        for k in range(1, data.shape[1]):
+            if (k in current_set_of_features):
+                continue
+            else:
+                #print("-- Considering adding the "+str(k)+" feature")
+                accuracy = leave_one_out_cross_validation(data, current_set_of_features, k)
+                if accuracy > best_acc_so_far:
+                    best_acc_so_far = accuracy
+                    feature_to_add_at_this_level = k
+
+        if feature_to_add_at_this_level:
+            current_set_of_features.append(feature_to_add_at_this_level)
+        print("On level "+str(i+1)+" I added feature "+str(feature_to_add_at_this_level)+" to current set")
+    endtime = time.time()
+    totaltime = round(endtime - starttime,2)
+    print("Finished search! The best feature set is ",current_set_of_features)
+    print(" It has an accuracy of ", best_acc_so_far)
+
+def backward_elim(data):
     current_set_of_features = [] #Initialize empty set
     
     best_acc_so_far = 0
